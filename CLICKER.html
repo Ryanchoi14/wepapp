@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>카드형 구구단 게임</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700&display=swap');
+  body { font-family: 'Nanum Gothic', sans-serif; text-align:center; background:#87ceeb; margin:0; padding:0; display:flex; justify-content:center; align-items:center; height:100vh; flex-direction:column;}
+  h1 { margin:20px 0; }
+  .screen { display:none; padding:20px; }
+  .card { display:inline-block; width:80px; height:50px; line-height:50px; margin:8px; background:#fff; border-radius:10px; box-shadow:0 3px 5px rgba(0,0,0,0.2); cursor:pointer; font-size:18px; transition: transform 0.2s, background 0.2s; }
+  .card:hover { transform: scale(1.1); background:#f0e68c; }
+  #feedback { font-size:24px; color:green; opacity:0; transition: opacity 0.5s; margin-top:15px; }
+  #hud { margin-top:15px; font-size:16px; }
+  .dan-row { display:flex; justify-content:center; margin-top:20px; flex-wrap:wrap; }
+</style>
+</head>
+<body>
+
+<!-- 홈 화면 -->
+<div id="homeScreen" class="screen" style="display:block;">
+  <h1>카드형 구구단 게임</h1>
+  <p>플레이할 단을 선택하세요</p>
+  <div id="danSelect" class="dan-row"></div>
+</div>
+
+<!-- 게임 화면 -->
+<div id="gameScreen" class="screen">
+  <div id="question" style="font-size:22px; margin:15px;"></div>
+  <div id="cards"></div>
+  <div id="feedback">정답!</div>
+  <div id="hud">
+    <span id="score">점수: 0</span> | 
+    <span id="wrong">틀린 횟수: 0</span>
+  </div>
+</div>
+
+<script>
+let dan = 2, score = 0, wrong = 0;
+let currentNum = 1;
+const maxNum = 9;
+
+// 홈 화면 단수 선택 카드 생성
+const danSelectDiv = document.getElementById('danSelect');
+for(let i=1;i<=9;i++){
+  const dCard = document.createElement('div');
+  dCard.className='card';
+  dCard.innerText=i+'단';
+  dCard.onclick=()=>startGame(i);
+  danSelectDiv.appendChild(dCard);
+}
+
+// 게임 시작
+function startGame(selectedDan){
+  dan = selectedDan;
+  score = 0; wrong = 0; currentNum=1;
+  showScreen('gameScreen');
+  updateHUD();
+  nextQuestion();
+}
+
+// 화면 전환
+function showScreen(screenId){
+  document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
+  document.getElementById(screenId).style.display='block';
+}
+
+// 문제 생성
+function nextQuestion(){
+  if(currentNum > maxNum){
+    // 3단이면 성공! 표시
+    if(dan===3){
+      const allCards = document.querySelectorAll('#danSelect .card');
+      allCards[dan-1].innerText = '성공!';
+    } else {
+      const allCards = document.querySelectorAll('#danSelect .card');
+      allCards[dan-1].innerText = dan+'단 COMPLETE';
+    }
+    showScreen('homeScreen');
+    return;
+  }
+  document.getElementById('question').innerText = `${dan} × ${currentNum} = ?`;
+  generateCards();
+}
+
+// 카드 3개 생성
+function generateCards(){
+  const cardsDiv = document.getElementById('cards');
+  cardsDiv.innerHTML='';
+  let correct = dan*currentNum;
+  let answers = [correct];
+  while(answers.length<3){
+    let wrongAns = correct + (Math.floor(Math.random()*5)-2);
+    if(wrongAns>0 && !answers.includes(wrongAns)) answers.push(wrongAns);
+  }
+  answers.sort(()=>Math.random()-0.5);
+  answers.forEach(a=>{
+    const card = document.createElement('div');
+    card.className='card';
+    card.innerText=a;
+    card.onclick=()=>checkAnswer(a);
+    cardsDiv.appendChild(card);
+  });
+}
+
+// 정답 확인
+function checkAnswer(ans){
+  const fb = document.getElementById('feedback');
+  if(ans === dan*currentNum){
+    fb.style.opacity='1';
+    setTimeout(()=>{ fb.style.opacity='0'; },500);
+    score++;
+    currentNum++;
+    updateHUD();
+    setTimeout(nextQuestion,300);
+  } else {
+    wrong++;
+    updateHUD();
+    if(wrong>=3){
+      alert('틀린 횟수 3회! 게임오버 😢');
+      showScreen('homeScreen');
+    }
+  }
+}
+
+// HUD 업데이트
+function updateHUD(){
+  document.getElementById('score').innerText='점수: '+score;
+  document.getElementById('wrong').innerText='틀린 횟수: '+wrong;
+}
+</script>
+
+</body>
+</html>
